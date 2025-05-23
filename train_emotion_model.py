@@ -1,3 +1,4 @@
+# Copyright @[Phat Nguyen Cong) (https://github.com/paht2005)
 import pandas as pd
 import numpy as np
 import torch
@@ -70,7 +71,7 @@ model = ResNetEmotion().to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-for epoch in range(20):  # or more
+for epoch in range(30):  # or more
     model.train()
     total_loss = 0
     for images, labels in train_loader:

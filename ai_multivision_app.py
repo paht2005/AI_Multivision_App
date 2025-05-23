@@ -1,3 +1,4 @@
+# Copyright @[Phat Nguyen Cong) (https://github.com/paht2005)
 import streamlit as st
 import cv2
 import numpy as np
@@ -77,8 +78,8 @@ def run_yolo(image):
     results = yolo_model(image)
     img_with_boxes = results[0].plot()
     return img_with_boxes
-
-# Detect and recognize license plates using contour heuristics + OCR
+#
+#  Detect and recognize license plates using contour heuristics + OCR
 def detect_license_plate(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 100, 200)
@@ -98,9 +99,12 @@ def detect_license_plate(image):
         cv2.rectangle(result_img, (x, y), (x + w, y + h), (0, 255, 0), 2)
         plate_img = gray[y:y + h, x:x + w]
         result = ocr_reader.readtext(plate_img)
+
         for (bbox, text, confidence) in result:
-            plate_texts.append((x, y, w, h, text))
-            cv2.putText(result_img, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+            if confidence > 0.5 and len(text.strip()) >= 3:
+                plate_texts.append((x, y, w, h, text))
+                cv2.putText(result_img, text, (x, y - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
 
     return plate_texts
 
