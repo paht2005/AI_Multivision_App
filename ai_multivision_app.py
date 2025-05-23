@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 # App configuration
 st.set_page_config(page_title="AI Vision App", layout="wide")
 st.title("🔍 AI Vision Processing App")
-with open("static/styles.css") as f:
+with open("static/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 # Load pre-trained models
 yolo_model = YOLO("yolov8n.pt")
@@ -108,35 +108,53 @@ def detect_license_plate(image):
 
     return plate_texts
 
-# Emotion detection from facial regions using CNN
 def detect_emotion(image):
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    results = yolo_face_model(rgb)
-    faces = results[0].boxes.xyxy.cpu().numpy().astype(int)  # [x1, y1, x2, y2]
-    
-    output_img = image.copy()
+    results = yolo_face_model(rgb, conf=0.3)
+    yolo_faces = results[0].boxes.xyxy.cpu().numpy().astype(int)
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    haar_faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+
+    all_faces = []
+
+    def iou(box1, box2):
+        x1, y1, x2, y2 = box1
+        x3, y3, x4, y4 = box2
+        xi1 = max(x1, x3)
+        yi1 = max(y1, y3)
+        xi2 = min(x2, x4)
+        yi2 = min(y2, y4)
+        inter = max(0, xi2 - xi1) * max(0, yi2 - yi1)
+        box1_area = (x2 - x1) * (y2 - y1)
+        box2_area = (x4 - x3) * (y4 - y3)
+        union = box1_area + box2_area - inter
+        return inter / union if union > 0 else 0
+
+    for (x1, y1, x2, y2) in yolo_faces:
+        all_faces.append((x1, y1, x2, y2))
+
+    for (x, y, w, h) in haar_faces:
+        box2 = (x, y, x + w, y + h)
+        if all(iou(box2, b) < 0.5 for b in all_faces):
+            all_faces.append(box2)
+
     emotions = []
+    output_img = image.copy()
 
-    for (x1, y1, x2, y2) in faces:
-        w = x2 - x1
-        h = y2 - y1
-
-        if w < 40 or h < 40:
-            continue  # Skip
-
+    for (x1, y1, x2, y2) in all_faces:
+        w, h = x2 - x1, y2 - y1
+        if w < 30 or h < 30:
+            continue
         face = rgb[y1:y2, x1:x2]
         face = cv2.resize(face, (48, 48))
-        face = cv2.cvtColor(face, cv2.COLOR_RGB2GRAY)
-        face = face / 255.0
-
+        face = cv2.cvtColor(face, cv2.COLOR_RGB2GRAY) / 255.0
         face_tensor = torch.tensor(face).unsqueeze(0).unsqueeze(0).float().to(device)
         with torch.no_grad():
             output = emotion_model(face_tensor)
             pred = torch.argmax(output, dim=1).item()
             emotion = emotion_labels[pred]
             emotions.append(((x1, y1, w, h), emotion))
-
-            # Result
             cv2.rectangle(output_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(output_img, emotion, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
 

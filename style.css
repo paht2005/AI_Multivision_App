@@ -1,0 +1,159 @@
+/* Copyright @[Phat Nguyen Cong) (https://github.com/paht2005)*/
+/* ===== GLOBAL STYLES ===== */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #121212;
+    color: #f0f0f0;
+}
+
+h1 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 600;
+    font-style: italic;
+    color: #ffffff;
+}
+
+/* ===== CHAT ROW STYLES ===== */
+.chat-row {
+    display: flex;
+    margin: 5px;
+    width: 100%;
+}
+
+.row-reverse {
+    flex-direction: row-reverse;
+}
+
+.chat-icon {
+    border-radius: 5px;
+    margin: 5px;
+}
+
+.chat-bubble {
+    padding: 10px 15px;
+    border-radius: 20px;
+    max-width: 70%;
+    font-size: 16px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    font-family: "Source Sans Pro", sans-serif;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.ai-bubble {
+    background-color: #2c2c2c;
+    color: #f0f0f0;
+    border: 1px solid #3a3a3a;
+    animation: typing 1s steps(20, end) 1;
+}
+
+.human-bubble {
+    background: linear-gradient(to right, #00bfff, #007bff);
+    color: #fff;
+    border: 1px solid #007bff;
+}
+
+@keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ===== CHAT CONTAINER ===== */
+.st-emotion-cache-g7r313 {
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 1rem;
+    height: 500px;
+    overflow-y: auto;
+    background-image: url('https://i.pinimg.com/originals/f5/3e/5b/f53e5b9903291589f9385b97e0997490.jpg');
+    background-size: cover;
+    background-position: center;
+    color: white;
+}
+
+/* ===== SIDEBAR ===== */
+.st-emotion-cache-1yiq2ps {
+    background-color: #1e1e1e;
+    color: white;
+    background-image: none;
+}
+
+/* ===== HEADER ===== */
+.st-emotion-cache-12fmjuu {
+    background: #1c1c1c;
+    border-bottom: 2px solid #333;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    color: white;
+}
+
+/* ===== FORM INPUT ===== */
+input[type="text"] {
+    border: 2px solid #00bfff;
+    border-radius: 25px;
+    padding: 10px;
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    width: 100%;
+}
+
+/* ===== BUTTON ===== */
+.stButton > button {
+    background-color: #ff8c00;
+    color: white;
+    font-weight: bold;
+    border-radius: 25px;
+    padding: 10px 20px;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.stButton > button:hover {
+    background-color: #e07c00;
+    color: #fff;
+}
+
+/* ===== CUSTOM SEND BUTTON CIRCULAR ===== */
+.circular-btn {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: transparent;
+    background-image: url('https://cdn-icons-png.flaticon.com/128/727/727399.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    border: none;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .chat-bubble {
+        font-size: 14px;
+        max-width: 85%;
+    }
+
+    .st-emotion-cache-g7r313 {
+        height: 400px;
+        padding: 0.5rem;
+    }
+
+    .circular-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    input[type="text"] {
+        padding: 8px;
+    }
+
+    .chat-icon {
+        width: 24px;
+        height: 24px;
+    }
+}
