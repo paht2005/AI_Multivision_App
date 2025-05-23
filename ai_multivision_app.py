@@ -17,6 +17,7 @@ st.title("🔍 AI Vision Processing App")
 with open("static/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 # Load pre-trained models
+license_plate_model = YOLO("license_plate_detector.pt")
 yolo_model = YOLO("yolov8n.pt")
 yolo_face_model = YOLO("yolov8n-face.pt")  
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
@@ -65,12 +66,18 @@ def load_image(uploaded_file):
 
 # Blur faces using Haar cascade
 def detect_faces_and_blur(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
-    for (x, y, w, h) in faces:
-        roi = image[y:y+h, x:x+w]
+    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = yolo_face_model(rgb, conf=0.3)
+    boxes = results[0].boxes.xyxy.cpu().numpy().astype(int)
+
+    for (x1, y1, x2, y2) in boxes:
+        w, h = x2 - x1, y2 - y1
+        if w < 30 or h < 30:
+            continue
+        roi = image[y1:y2, x1:x2]
         blur = cv2.GaussianBlur(roi, (99, 99), 30)
-        image[y:y+h, x:x+w] = blur
+        image[y1:y2, x1:x2] = blur
+
     return image
 
 # Perform object detection using YOLOv8
@@ -80,30 +87,23 @@ def run_yolo(image):
     return img_with_boxes
 #
 #  Detect and recognize license plates using contour heuristics + OCR
+
 def detect_license_plate(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 100, 200)
-    contours, _ = cv2.findContours(edges.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-    plate_candidates = []
-    for cnt in contours:
-        x, y, w, h = cv2.boundingRect(cnt)
-        ratio = w / float(h)
-        if 2 < ratio < 6 and 100 < w < 500 and 30 < h < 150:
-            plate_candidates.append((x, y, w, h))
-
+    results = license_plate_model(image)
+    boxes = results[0].boxes.xyxy.cpu().numpy().astype(int)
     result_img = image.copy()
     plate_texts = []
 
-    for (x, y, w, h) in plate_candidates:
-        cv2.rectangle(result_img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        plate_img = gray[y:y + h, x:x + w]
-        result = ocr_reader.readtext(plate_img)
+    for (x1, y1, x2, y2) in boxes:
+        plate_img = image[y1:y2, x1:x2]
+        gray_plate = cv2.cvtColor(plate_img, cv2.COLOR_BGR2GRAY)
+        result = ocr_reader.readtext(gray_plate)
 
-        for (bbox, text, confidence) in result:
+        for (_, text, confidence) in result:
             if confidence > 0.5 and len(text.strip()) >= 3:
-                plate_texts.append((x, y, w, h, text))
-                cv2.putText(result_img, text, (x, y - 10),
+                plate_texts.append((x1, y1, x2 - x1, y2 - y1, text))
+                cv2.rectangle(result_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(result_img, text, (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
 
     return plate_texts
@@ -144,7 +144,12 @@ def detect_emotion(image):
 
     for (x1, y1, x2, y2) in all_faces:
         w, h = x2 - x1, y2 - y1
+        ratio = w / float(h)
         if w < 30 or h < 30:
+            continue
+        if w < 30 or h < 30 or ratio < 0.6 or ratio > 1.4:
+            continue
+        if y1 > image.shape[0] * 0.8:  
             continue
         face = rgb[y1:y2, x1:x2]
         face = cv2.resize(face, (48, 48))
