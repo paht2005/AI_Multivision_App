@@ -1,6 +1,6 @@
 # 🧠 AI_Multivision_App – Streamlit-based AI Vision Toolkit
 A lightweight AI computer vision app built with **Streamlit** that combines multiple real-world vision tasks: **YOLOv8 object detection**, **license plate OCR**, **emotion detection**, and **face blurring** — all wrapped in a user-friendly web interface.
-![demo](./images/demo2.png)
+![demo](./static/demo2.png)
 
 ---
 
@@ -62,7 +62,7 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 
 ## 🧰 Tech Stack
 
-| Purpose                  | Libraries Used                                        |
+| Purpose                  | Libraries/Models Used                                       |
 |--------------------------|-------------------------------------------------------|
 | **Detection**        | ``	ultralytics`` (YOLOv8)                            |
 | **OCR**       | ``easyocr``, ``OpenCV``, ``contours``                                 |
@@ -77,54 +77,59 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 ## ⚙️ Installation
 
 ```bash
-# Clone repository
-git clone https://github.com/paht2005/ai-voice-assistant-suite.git
-cd ai-voice-assistant-suite
+# Clone the repo
+git clone https://github.com/paht2005/AI_Multivision_App.git
+cd AI_Multivision_App
 
 # Install dependencies
-pip install -r requirements-ai.txt
+pip install -r requirements.txt
 
-# Run Flask web app
-python flask_app.py
+# Run the app
+streamlit run ai_multivision_app.py
 
 
 ```
-Then open your browser: http://127.0.0.1:5000
+Then open your browser: ``[http://127.0.0.1:5000](http://localhost:8501)``
 
 ---
 
 ## ✅ Feature Details
 
-### 1. Voice Transcription
-- Uses Whisper model to transcribe audio files or mic input.
-- Auto language detection & punctuation recovery.
-### 2. TTS Answering
-- Enter any text → generate voice using Coqui TTS model.
-- Output saved as ``static/tts_output.wav``.
-### 3. Voice Cloning
-- Upload a 3–5 sec voice sample (.wav).
-- Type any text → generates response in that speaker's voice.
-### 4. Emotion Detection (CNN)
-- Trained using RAVDESS dataset.
-- Input ``.wav`` → predicts 1 of 8 emotions.
-- Model: ``CNN + MFCC`` → ``emotion_cnn.pth``
-### 5. Document Q&A
-- Upload voice question (.wav)
-- Uses Whisper to transcribe → SentenceTransformer + ChromaDB to retrieve doc context → Falcon or LLM to answer.
-### 6. Podcast Summarization
-- Upload long ``.wav`` podcast → splits into chunks → summarizes using BART-based model.
-- Summary returned as paragraph.
+### 1. YOLOv8 Object Detection
+- Uses ``yolov8n.pt`` to detect COCO objects.
+- Simple call to ``yolo_model(image)`` and plotting via ``.plot()``.
+### 2. License Plate Recognition
+- Steps:
+    - **Upscale** input image.
+    - Use YOLOv8 to detect **vehicles only**.
+    - Apply **contour detection** inside cropped vehicle ROI to locate plate-like boxes.
+    - Run **EasyOCR** on those contours.
+- Heuristics: Ratio 2–6, width 80–400px, height 25–150px, min confidence > 0.5
+### 3. Emotion Detection (CNN)
+- Combines YOLOv8-face and Haar Cascade to detect as many valid face ROIs as possible.
+- Filters out small, elongated, or irrelevant boxes.
+- Extracts grayscale face, resizes to 48×48, runs through ``ResNet18``.
+- Output class among: ``Angry``, ``Disgust``, ``Fear``, ``Happy``, ``Sad``, ``Surprise``, ``Neutral``.
+### 4. Face Blurring
+- Uses ``yolov8n-face.pt`` to find faces with ``conf=0.3``.
+- Applies ``cv2.GaussianBlur()`` with strong parameters (99×99) to obfuscate.
+- Skip blurring on low-size regions (w/h < 30).
+
 
 ---
-## 🛠 How It Works (Behind the Scenes)
-Each feature operates through a dedicated **audio or NLP processing pipeline**:
+##  🧠 How It Works
 
-### 1. Voice Transcription
-- **Input:** ``.wav`` file recorded from the user
-- **Process:**
-  - The **Whisper** model converts the audio waveform into a **log-Mel spectrogram**.
-  - A multilingual decoder processes the spectrogram and generates the corresponding **text transcription**.
-- **Output:** Clean, normalized text
+
+### 1. YOLOv8 Architecture
+- YOLOv8 is a real-time one-stage detector from Ultralytics.
+- Internally processes images as:
+  - Resized to square
+  - Encoded into **feature pyramids**
+  - Uses anchor-free detection heads
+  - Outputs class + confidence + bounding box (xyxy)
+- **Thresholds:**
+  - Confidence (``conf=0.25``) controls minimum detection probability.
+  - IOU (``iou=0.3``) determines overlap during NMS.
 
 ### 2. Text-to-Speech (TTS) Answering
 - **Input:** Text string generated or typed by the user
@@ -134,54 +139,31 @@ Each feature operates through a dedicated **audio or NLP processing pipeline**:
   - Optionally, the voice output is adjusted using a **cloned speaker embedding**.
 - **Output:** ``tts_output.wav`` file saved in ``/static/`` directory
 
-### 3. Voice Cloning
-- **Input:** A reference voice ``.wav`` file + target text
-- **Process:**
-  - Extract a **speaker embedding** from the input voice.
-  - Use a multi-speaker TTS model to synthesize speech that matches the **tone and identity** of the reference speaker.
-- **Output:** Synthetic speech in the cloned voice
+### 3. Emotion Pipeline
+```bash
+Input → YOLO/haar → Face crop → Resize to 48x48 → Normalize → CNN → Softmax → Label
 
-### 4. Emotion Detection (CNN)
-- **Input:** A short audio segment 
-- **Process:**
-  - Extract **MFCC (Mel-Frequency Cepstral Coefficients)** features.
-  - Feed the MFCC vector into a **2-layer CNN** or classifier.
-  - Predict one of several emotion classes: e.g., ``angry``, ``happy``, ``sad``, etc.
-- **Output:** Detected emotion label (among 8 predefined classes)
+```
+- Trained using ``FER2013.csv`` with heavy augmentation. Download dataset fer2013.csv on Kaggle
+- Training code in ``train_emotion_model.py``
 
-### 5. Document Q&A (RAG)
-- **Input:** Spoken question from the user
-- **Process:**
-  - **Whisper** transcribes the spoken query into text.
-  - The query is embedded using **SentenceTransformer**.
-  - A **vector search** is performed using **ChromaDB** to find relevant documents.
-  - A **language model (LLM)** generates the final answer using the retrieved context.
-- **Output:** Answer in natural language (text)
-
-### 6. Podcast Summarization
-- **Input:** Long-form ``.wav`` file (e.g., podcast, recorded lecture)
-- **Process:**
-  - **Whisper** transcribes the full audio into text.
-  - The transcript is **chunked** into manageable segments.
-  - Each segment is summarized using a model like **BART** or **DistilBART**.
-- **Output:** Final summary as paragraph or structured bullet points.
 --- 
 ## 🧪 Known Issues
 
-| Issue                         | Cause                       | Solution                                                                |
+| Issue                         | Reason                      | Fix or Tip                                                               |
 |-------------------------------|-----------------------------|-------------------------------------------------------------------------
-| **❗ Whisper FP16 Warningn**  | No GPU                      | Ignore or use GPU for speed                                            |   
-| **❌ ``punkt`` not found**    | NLTK missing tokenizer      | Run ``nltk.download('punkt')``                                         |
-| **❌ Audio shape mismatchg**  | CNN flatten mismatch        | Use dynamic flatten in CNN                                             |
-| **❌ ffmpeg not found**       | Whisper depends on it       | [Install ffmpeg](https://ffmpeg.org/download.html) & add to PATH       |
+| **❌ License plate not detected**  | Low res / angle too sharp                     | Try high-res images or fine-tuned YOLO                                          |   
+| **⚠️ Wrong emotion on profile face**    | Face angle/size unsuitable     | Use more frontal face                                         |
+| **❌ YOLO doesn't detect all faces**  | Model confidence threshold too high        | Reduce ``conf=0.3``, or combine with Haar                                             |
+
 
 --- 
-## 🧭 Future Work
--  Add real-time streaming voice interface
-- WebSocket for fast speech interaction
-- Export as REST API (for mobile use)
-- Integrate multi-lingual support (Vietnamese, etc.)
-- User auth system for personalized interaction
+## 📈 Future Enhancements
+- Train custom YOLOv8 model for specific license plates
+- Add bounding box visualization for plates
+- Integrate real-time webcam stream support
+- Add face recognition / anonymization toggle
+- Add Vietnamese UI translation support
 ---
 ## 📄 License
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
