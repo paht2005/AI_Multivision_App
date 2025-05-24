@@ -9,15 +9,16 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 1. [✨ Project Overview](#-project-overview)  
 2. [🚀 Features](#-features)  
 3. [🗂️ Project Structure](#-project-structure)
-4. [🧰 Tech Stack](#-tech-stack)
-5. [⚙️ Installation](#-installation)
-6. [✅ Feature Details](#-feature-details)
-7. [🧠 How It Works)](#-how-it-works)
-8. [🧪 Known Issuess](#-known-issues)
-9. [📈 Future Enhancements](#-future-enhancements)  
-10. [📄 License](#-license)
-11. [🤝 Contributing](#-contributing)
-12. [📬 Contact](#-contact)
+4. [🧠 Use Cases](#-use-cases)
+5. [🧰 Tech Stack](#-tech-stack)
+6. [⚙️ Installation](#-installation)
+7. [✅ Feature Details](#-feature-details)
+8. [🛠 How It Works)](#-how-it-works)
+9. [🧪 Known Issuess](#-known-issues)
+10. [📈 Future Enhancements](#-future-enhancements)  
+11. [📄 License](#-license)
+12. [🤝 Contributing](#-contributing)
+13. [📬 Contact](#-contact)
 
 ---
 
@@ -30,6 +31,17 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 - Provide **face anonymization** via Gaussian blur.
 
 ### 2. Accessible via Streamlit for demo or educational purposes.
+### 3. About YOLOv8
+- **YOLOv8 (You Only Look Once version 8)** is the latest generation in the YOLO family developed by **Ultralytics**, featuring several significant improvements with **key features**:
+    - **Anchor-Free Architecture:** Eliminates the need for anchor boxes, improving speed and reducing false positives.
+    - **High Accuracy and Speed:** Outperforms previous versions in both precision (e.g., on the COCO benchmark) and inference speed.
+    - **Modular Design:** Easily customizable for training on custom datasets or deployment in various environments.
+    - **ONNX / TorchScript Export:** Supports export for mobile and edge deployment.
+- **YOLOv8 Processing Pipeline:**
+    - **Input:** Image is resized to a square format.
+    - **Feature Extraction:** Image is passed through the backbone network to extract feature maps.
+    - **Detection Head Output:** **(x1, y1, x2, y2)** - Bounding box coordinates, **class_id** - Object class index, **confidence** - Detection confidence score.
+    - Implemented using the ``ultralytics`` Python package, YOLOv8 is highly accessible and can be retrained for various custom use cases.
 
 ---
 
@@ -59,6 +71,19 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 
 ```
 ---
+## 🧠 Use Cases
+
+| Use Case                | Description                                    |
+|--------------------------|-------------------------------------------------------|
+| **Traffic Surveillance**        | 	Automatically detect and recognize license plates from street cameras.                        |
+| **Face Anonymization**       | Blur detected faces in public images/videos to preserve privacy.                                |
+| **Emotion Analytics**              | Analyze facial expressions in customer service, classrooms, or kiosks. |
+| **Vehicle Counting**       | Classify and count vehicles using dashcam or roadside camera feeds.                                    |
+| **Educational Tool**    | Demonstrate computer vision concepts in AI courses or academic projects.  |
+| **Industrial OCR**    | Recognize printed text on packaging, signage, or outdoor industrial objects. |
+
+
+--- 
 
 ## 🧰 Tech Stack
 
@@ -76,19 +101,22 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 
 ## ⚙️ Installation
 
+### 1. Clone the repository:
 ```bash
-# Clone the repo
+
 git clone https://github.com/paht2005/AI_Multivision_App.git
 cd AI_Multivision_App
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the app
-streamlit run ai_multivision_app.py
-
-
 ```
+### 2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run the app
+```bash
+streamlit run ai_multivision_app.py
+```
+
 Then open your browser: ``[http://127.0.0.1:5000](http://localhost:8501)``
 
 ---
@@ -117,7 +145,7 @@ Then open your browser: ``[http://127.0.0.1:5000](http://localhost:8501)``
 
 
 ---
-##  🧠 How It Works
+##  🛠 How It Works
 
 
 ### 1. YOLOv8 Architecture
