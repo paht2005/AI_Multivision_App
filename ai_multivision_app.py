@@ -89,24 +89,41 @@ def run_yolo(image):
 #  Detect and recognize license plates using contour heuristics + OCR
 
 def detect_license_plate(image):
-    results = license_plate_model(image)
-    boxes = results[0].boxes.xyxy.cpu().numpy().astype(int)
-    result_img = image.copy()
+    # Resize for better OCR
+    image_up = cv2.resize(image, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+    gray_up = cv2.cvtColor(image_up, cv2.COLOR_BGR2GRAY)
+
+    # YOLO detect vehicles
+    results = yolo_model(image_up, conf=0.25, iou=0.3)
+    vehicle_boxes = []
+    for box, cls in zip(results[0].boxes.xyxy.cpu().numpy().astype(int), results[0].boxes.cls.cpu().numpy()):
+        if int(cls) in [2, 3, 5, 7]:  # class ids for car, motorcycle, bus, truck
+            vehicle_boxes.append(box)
+
     plate_texts = []
+    output_img = image_up.copy()
 
-    for (x1, y1, x2, y2) in boxes:
-        plate_img = image[y1:y2, x1:x2]
-        gray_plate = cv2.cvtColor(plate_img, cv2.COLOR_BGR2GRAY)
-        result = ocr_reader.readtext(gray_plate)
+    for (x1, y1, x2, y2) in vehicle_boxes:
+        car_crop = image_up[y1:y2, x1:x2]
 
-        for (_, text, confidence) in result:
-            if confidence > 0.5 and len(text.strip()) >= 3:
-                plate_texts.append((x1, y1, x2 - x1, y2 - y1, text))
-                cv2.rectangle(result_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(result_img, text, (x1, y1 - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+        # Contour detection inside car region
+        gray_car = cv2.cvtColor(car_crop, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray_car, 100, 200)
+        contours, _ = cv2.findContours(edges.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    return plate_texts
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            if 2 < w/h < 6 and 80 < w < 400 and 25 < h < 150:
+                plate_roi = gray_car[y:y+h, x:x+w]
+                result = ocr_reader.readtext(plate_roi)
+
+                for (bbox, text, confidence) in result:
+                    if confidence > 0.5 and len(text.strip()) >= 4:
+                        cv2.rectangle(output_img, (x1+x, y1+y), (x1+x+w, y1+y+h), (0, 255, 0), 2)
+                        cv2.putText(output_img, text, (x1+x, y1+y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                        plate_texts.append(((x1+x, y1+y, w, h), text))
+
+    return output_img, plate_texts
 
 def detect_emotion(image):
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -182,9 +199,9 @@ with tabs[1]:
 
 with tabs[2]:
     if 'image' in st.session_state:
-        plates = detect_license_plate(st.session_state['image'].copy())
-        st.image(st.session_state['image'], caption="Detected Plates", use_container_width=True)
-        for (x, y, w, h, text) in plates:
+        output_img, plates = detect_license_plate(st.session_state['image'].copy())
+        st.image(output_img, caption="Detected Plates", use_container_width=True)
+        for (x, y, w, h), text in plates:
             st.write(f"🔤 Text at ({x},{y},{w},{h}): `{text}`")
 
 with tabs[3]:
