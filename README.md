@@ -4,8 +4,8 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 <p align="left">
   
   <img src="static/demo1.png" width="200">
-  <img src="static/demo3.png" width="200">
-  <img src="static/demo4.png" width="200"><br/>
+  <img src="static/demo5.png" width="200">
+  <img src="static/demo3.png" width="200"><br/>
   <i>Sample results</i>
 </p>
 
