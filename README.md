@@ -1,6 +1,13 @@
 # 🧠 AI_Multivision_App – Streamlit-based AI Vision Toolkit
 A lightweight AI computer vision app built with **Streamlit** that combines multiple real-world vision tasks: **YOLOv8 object detection**, **license plate OCR**, **emotion detection**, and **face blurring** — all wrapped in a user-friendly web interface.
-![demo](./static/demo2.png)
+
+<p align="left">
+  
+  <img src="static/demo1.png" width="200">
+  <img src="static/demo3.png" width="200">
+  <img src="static/demo4.png" width="200"><br/>
+  <i>Sample results</i>
+</p>
 
 ---
 
