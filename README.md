@@ -1,5 +1,5 @@
-# 🧠 AI_Multivision_App – Streamlit-based AI Vision Toolkit
-A lightweight AI computer vision app built with **Streamlit** that combines multiple real-world vision tasks: **YOLOv8 object detection**, **license plate OCR**, **emotion detection**, and **face blurring** — all wrapped in a user-friendly web interface.
+# AI_Multivision_App – Streamlit-based AI Vision Toolkit
+AI_Multivision_App is a lightweight, all-in-one computer vision demo built using Streamlit. It brings together several practical AI vision tasks — object detection, license plate recognition, emotion detection, and face blurring — all wrapped in a clean and easy-to-use web interface.
 
 <p align="left">
   
@@ -11,25 +11,25 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 
-1. [✨ Project Overview](#-project-overview)  
-2. [🚀 Features](#-features)  
-3. [🗂️ Project Structure](#-project-structure)
-4. [🧠 Use Cases](#-use-cases)
-5. [🧰 Tech Stack](#-tech-stack)
-6. [⚙️ Installation](#-installation)
-7. [✅ Feature Details](#-feature-details)
-8. [🛠 How It Works)](#-how-it-works)
-9. [🧪 Known Issuess](#-known-issues)
-10. [📈 Future Enhancements](#-future-enhancements)  
-11. [📄 License](#-license)
-12. [🤝 Contributing](#-contributing)
-13. [📬 Contact](#-contact)
+1. [Project Overview](#-project-overview)  
+2. [Features](#-features)  
+3. [Project Structure](#-project-structure)
+4. [Use Cases](#-use-cases)
+5. [Tech Stack](#-tech-stack)
+6. [Installation](#-installation)
+7. [Feature Details](#-feature-details)
+8. [How It Works)](#-how-it-works)
+9. [Known Issuess](#-known-issues)
+10. [Future Enhancements](#-future-enhancements)  
+11. [License](#-license)
+12. [Contributing](#-contributing)
+13. [Contact](#-contact)
 
 ---
 
-## ✨ Project Overview
+## Project Overview
 
 ### 1. This app is designed to:
 - Leverage **YOLOv8** for detecting general objects and faces.
@@ -52,7 +52,7 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 
 ---
 
-## 🚀 Features
+## Features
 
 | Feature Name                         | Description                                                | Technique/Model Used                                  |
 |--------------------------------------|------------------------------------------------------------|--------------------------------------------------------
@@ -63,7 +63,7 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 
 
 ---
-## 🗂️ Project Structure
+## Project Structure
 ```
 ├── ai_multivision_app.py           # Main Streamlit app logic
 ├── train_emotion_model.py          # Script to train ResNet emotion model
@@ -78,7 +78,7 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 
 ```
 ---
-## 🧠 Use Cases
+## Use Cases
 
 | Use Case                | Description                                    |
 |--------------------------|-------------------------------------------------------|
@@ -92,7 +92,7 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 
 --- 
 
-## 🧰 Tech Stack
+## Tech Stack
 
 | Purpose                  | Libraries/Models Used                                       |
 |--------------------------|-------------------------------------------------------|
@@ -106,7 +106,7 @@ A lightweight AI computer vision app built with **Streamlit** that combines mult
 
 ---
 
-## ⚙️ Installation
+## Installation
 
 ### 1. Clone the repository:
 ```bash
@@ -128,7 +128,7 @@ Then open your browser: ``[http://127.0.0.1:5000](http://localhost:8501)``
 
 ---
 
-## ✅ Feature Details
+## Feature Details
 
 ### 1. YOLOv8 Object Detection
 - Uses ``yolov8n.pt`` to detect COCO objects.
@@ -152,7 +152,7 @@ Then open your browser: ``[http://127.0.0.1:5000](http://localhost:8501)``
 
 
 ---
-##  🛠 How It Works
+##  How It Works
 
 
 ### 1. YOLOv8 Architecture
@@ -183,34 +183,34 @@ Input → YOLO/haar → Face crop → Resize to 48x48 → Normalize → CNN → 
 - Training code in ``train_emotion_model.py``
 
 --- 
-## 🧪 Known Issues
+## Known Issues
 
 | Issue                         | Reason                      | Fix or Tip                                                               |
 |-------------------------------|-----------------------------|-------------------------------------------------------------------------
-| **❌ License plate not detected**  | Low res / angle too sharp                     | Try high-res images or fine-tuned YOLO                                          |   
-| **⚠️ Wrong emotion on profile face**    | Face angle/size unsuitable     | Use more frontal face                                         |
-| **❌ YOLO doesn't detect all faces**  | Model confidence threshold too high        | Reduce ``conf=0.3``, or combine with Haar                                             |
+| **License plate not detected**  | Low res / angle too sharp                     | Try high-res images or fine-tuned YOLO                                          |   
+| **Wrong emotion on profile face**    | Face angle/size unsuitable     | Use more frontal face                                         |
+| **YOLO doesn't detect all faces**  | Model confidence threshold too high        | Reduce ``conf=0.3``, or combine with Haar                                             |
 
 
 --- 
-## 📈 Future Enhancements
+## Future Enhancements
 - Train custom YOLOv8 model for specific license plates
 - Add bounding box visualization for plates
 - Integrate real-time webcam stream support
 - Add face recognition / anonymization toggle
 - Add Vietnamese UI translation support
 ---
-## 📄 License
+## License
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
 
 
 ---
-## 🤝 Contributing
+## Contributing
 I welcome contributions to improve this project!
 Feel free to fork, pull request, or open issues. Ideas welcome!
 
 
 --- 
-## 📬 Contact
+## Contact
 - Contact for work: **Nguyễn Công Phát** – congphatnguyen.work@gmail.com
 - [Github](https://github.com/paht2005) 
