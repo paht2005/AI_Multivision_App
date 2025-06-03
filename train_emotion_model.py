@@ -8,54 +8,49 @@ from torchvision import transforms, models
 from torch.utils.data import DataLoader, Dataset, random_split
 from PIL import Image
 
-# 1. Load FER2013 dataset
-df = pd.read_csv("fer2013.csv")
-df['pixels'] = df['pixels'].apply(lambda x: np.array(x.split(), dtype='float32').reshape(48, 48) / 255.0)
-X = np.stack(df['pixels'].values)
-y = df['emotion'].values
 
-# 2. Custom Dataset with augmentation
+DATASET_PATH = "fer2013.csv"
+MODEL_OUTPUT_PATH = "emotion_resnet18.pth"
+BATCH_SIZE = 128
+EPOCHS = 30
+LEARNING_RATE = 0.001
+VALIDATION_SPLIT = 0.2
+
+def load_fer2013(path):
+    """Load FER2013 CSV dataset and preprocess pixels."""
+    df = pd.read_csv(path)
+    df['pixels'] = df['pixels'].apply(lambda x: np.array(x.split(), dtype='float32').reshape(48, 48) / 255.0)
+    images = np.stack(df['pixels'].values)
+    labels = df['emotion'].values
+    return images, labels
+
 class FERDataset(Dataset):
-    def __init__(self, X, y, augment=False):
-        self.X = X
-        self.y = y
+    def __init__(self, images, labels, augment=False):
+        self.images = images
+        self.labels = labels
         self.augment = augment
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomApply([transforms.ColorJitter(0.3, 0.3)], p=0.5),
+            transforms.ColorJitter(0.3, 0.3),
             transforms.RandomCrop(44, padding=2),
             transforms.Resize((48, 48)),
             transforms.ToTensor()
         ])
 
     def __len__(self):
-        return len(self.X)
+        return len(self.images)
 
     def __getitem__(self, idx):
-        img = self.X[idx]  
-        img = np.expand_dims(img, axis=0)  
-
+        image = np.expand_dims(self.images[idx], axis=0)
         if self.augment:
-            img = np.transpose(img, (1, 2, 0))  # convert to (H, W, C)
-            img = self.transform(img)  # ToPILImage expects HWC
+            image = np.transpose(image, (1, 2, 0))
+            image = self.transform(image)
         else:
-            img = torch.tensor(img, dtype=torch.float32)
+            image = torch.tensor(image, dtype=torch.float32)
+        return image, self.labels[idx]
 
-        return img, self.y[idx]
-
-
-# 3. Create Dataloaders
-dataset = FERDataset(X, y, augment=True)
-train_size = int(0.8 * len(dataset))
-val_size = len(dataset) - train_size
-train_ds, val_ds = random_split(dataset, [train_size, val_size])
-
-train_loader = DataLoader(train_ds, batch_size=128, shuffle=True)
-val_loader = DataLoader(val_ds, batch_size=128)
-
-# 4. ResNet18 model (input: grayscale, output: 7 classes)
-class ResNetEmotion(nn.Module):
+class EmotionResNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.model = models.resnet18(pretrained=True)
@@ -65,25 +60,50 @@ class ResNetEmotion(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-# 5. Train the model
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = ResNetEmotion().to(device)
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+def train(model, train_loader, val_loader, device):
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-for epoch in range(30):  # or more
-    model.train()
-    total_loss = 0
-    for images, labels in train_loader:
-        images, labels = images.to(device), labels.to(device)
-        optimizer.zero_grad()
-        out = model(images)
-        loss = criterion(out, labels)
-        loss.backward()
-        optimizer.step()
-        total_loss += loss.item()
-    print(f"Epoch {epoch+1} - Loss: {total_loss:.4f}")
+    for epoch in range(EPOCHS):
+        model.train()
+        running_loss = 0
+        for images, labels in train_loader:
+            images, labels = images.to(device), labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+        
+        print(f"Epoch [{epoch+1}/{EPOCHS}], Loss: {running_loss:.4f}")
 
-# 6. Save the model
-torch.save(model.state_dict(), "emotion_resnet18.pth")
-print("✅ Model saved to emotion_resnet18.pth")
+        # Optional: validate after each epoch
+        model.eval()
+        correct, total = 0, 0
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                predicted = torch.argmax(outputs, dim=1)
+                correct += (predicted == labels).sum().item()
+                total += labels.size(0)
+        print(f"Validation Accuracy: {100 * correct / total:.2f}%")
+
+if __name__ == "__main__":
+    images, labels = load_fer2013(DATASET_PATH)
+    dataset = FERDataset(images, labels, augment=True)
+    train_size = int((1 - VALIDATION_SPLIT) * len(dataset))
+    val_size = len(dataset) - train_size
+    train_ds, val_ds = random_split(dataset, [train_size, val_size])
+
+    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
+    val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = EmotionResNet().to(device)
+
+    train(model, train_loader, val_loader, device)
+
+    torch.save(model.state_dict(), MODEL_OUTPUT_PATH)
+    print(f"Model successfully saved to {MODEL_OUTPUT_PATH}")
